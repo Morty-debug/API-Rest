@@ -14,7 +14,7 @@ import (
 )
 
 
-var conexion = "root:2022Veronica@tcp(127.0.0.1:3306)/ApiRest?charset=utf8"
+var conexion = "root:123456@tcp(127.0.0.1:3306)/ApiRest?charset=utf8"
 
 
 type RespuestaToken struct {
