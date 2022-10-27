@@ -1,10 +1,10 @@
 package main
 
+
 import (
 	"fmt"
 	"net/http"
 	"time"
-	"log"
 	"strings"
 	"crypto/sha256"
 	"crypto/subtle"
@@ -13,16 +13,19 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 )
 
+
 var conexion = "root:2022Veronica@tcp(127.0.0.1:3306)/ApiRest?charset=utf8"
+
 
 type RespuestaToken struct {
 	Token string
 	Error int
 }
 
+
 func hasher(s string) []byte {
-    val := sha256.Sum256([]byte(s))
-    return val[:]
+	val := sha256.Sum256([]byte(s))
+	return val[:]
 }
 
 
@@ -33,15 +36,15 @@ func hasher(s string) []byte {
 /*
 /*****************************************************/
 func authBasicHandler(handler http.HandlerFunc, userhash, passhash []byte, realm string) http.HandlerFunc {
-    return func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
 		user, pass, ok := r.BasicAuth()
-        if !ok || subtle.ConstantTimeCompare(hasher(user),userhash) != 1 || subtle.ConstantTimeCompare(hasher(pass),passhash) != 1 {
-            w.Header().Set("WWW-Authenticate", `Basic realm="`+realm+`"`)
-            http.Error(w, "No autorizado.", http.StatusUnauthorized)
-            return
-        }
-        handler(w, r)
-    }
+		if !ok || subtle.ConstantTimeCompare(hasher(user),userhash) != 1 || subtle.ConstantTimeCompare(hasher(pass),passhash) != 1 {
+			w.Header().Set("WWW-Authenticate", `Basic realm="`+realm+`"`)
+			http.Error(w, "No autorizado.", http.StatusUnauthorized)
+			return
+		}
+		handler(w, r)
+	}
 }
 
 
@@ -52,8 +55,8 @@ func authBasicHandler(handler http.HandlerFunc, userhash, passhash []byte, realm
 /*
 /*****************************************************/
 func authTokenHandler(handler http.HandlerFunc, realm string) http.HandlerFunc {
-    return func(w http.ResponseWriter, r *http.Request) {
-    	var verificacion string
+	return func(w http.ResponseWriter, r *http.Request) {
+		var verificacion string
 		authorization := r.Header.Get("Authorization")
 		idToken := strings.TrimSpace(strings.Replace(authorization, "Bearer", "", 1))
 		db, err := sql.Open("mysql", conexion)
@@ -62,8 +65,8 @@ func authTokenHandler(handler http.HandlerFunc, realm string) http.HandlerFunc {
 			db.Close()
 			fmt.Println("Error al aperturar la conexion a la base de datos")
 			w.Header().Set("WWW-Authenticate", `Token realm="`+realm+`"`)
-            http.Error(w, "No autorizado.", http.StatusUnauthorized)
-            return
+			http.Error(w, "No autorizado.", http.StatusUnauthorized)
+			return
 		}
 		res, err := db.Query("SELECT ApiRest.validartocken(?)",idToken)
 		defer res.Close()
@@ -103,28 +106,6 @@ func authTokenHandler(handler http.HandlerFunc, realm string) http.HandlerFunc {
 			http.Error(w, "No autorizado.", http.StatusUnauthorized)
 			return
 		}
-    }
-}
-
-
-
-/*****************************************************/
-/*
-/* Autenticacion Basica
-/*
-/*****************************************************/
-func main() {
-	userhash := hasher("usuario")
-	passhash := hasher("contraseña")
-	mux := http.NewServeMux()
-	
-	mux.HandleFunc("/GetToken", authBasicHandler(GetToken, userhash, passhash, "BasicAuth necesita credenciales"))
-	mux.HandleFunc("/ServicioConToken", authTokenHandler(ServicioConToken, "TokenAuth necesita token"))
-	
-	server := &http.Server{ Addr: ":5002", Handler: mux, ReadTimeout: 60 * time.Second, WriteTimeout: 60 * time.Second }
-	err := server.ListenAndServe()
-	if err != nil {
-        log.Fatal("Error de ListenAndServe: ", err)
 	}
 }
 
@@ -132,7 +113,29 @@ func main() {
 
 /*****************************************************/
 /*
-/* Servicio con Token
+/* Metodo principal
+/*
+/*****************************************************/
+func main() {
+	userhash := hasher("usuario")
+	passhash := hasher("contraseña")
+	mux := http.NewServeMux()
+
+	mux.HandleFunc("/GetToken", authBasicHandler(GetToken, userhash, passhash, "BasicAuth necesita credenciales"))
+	mux.HandleFunc("/ServicioConToken", authTokenHandler(ServicioConToken, "TokenAuth necesita token"))
+
+	server := &http.Server{ Addr: ":5002", Handler: mux, ReadTimeout: 60 * time.Second, WriteTimeout: 60 * time.Second }
+	err := server.ListenAndServe()
+	if err != nil {
+		fmt.Println("Error de ListenAndServe")
+	}
+}
+
+
+
+/*****************************************************/
+/*
+/* Servicio con Autenticacion Token
 /*
 /*****************************************************/
 func ServicioConToken(w http.ResponseWriter, r *http.Request) {
@@ -193,4 +196,3 @@ func GetToken(w http.ResponseWriter, r *http.Request) {
 	w.Write(js)
 	return
 }
-
