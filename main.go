@@ -2,6 +2,7 @@ package main
 
 
 import (
+	"bytes"
 	"fmt"
 	"net/http"
 	"time"
@@ -24,11 +25,13 @@ type Respuesta struct {
 
 type Recepcion struct {
 	Nombre string
-	Documentos[] struct {
-		TipoDocumento string
-		NumeroDocumento string
-	}
+	Documentos []Documentoss
 }
+type Documentoss struct {
+	TipoDocumento string
+	NumeroDocumento string
+}
+
 
 func hasher(s string) []byte {
 	val := sha256.Sum256([]byte(s))
@@ -140,6 +143,92 @@ func main() {
 }
 
 func Index(w http.ResponseWriter, r *http.Request) { 
+	var Mostrar Respuesta
+	var recepcion1 Respuesta
+	var recepcion2 Respuesta
+	var Enviaremos Recepcion
+	var Documentos []Documentoss
+	req1, err := http.NewRequest("POST", "http://localhost:5002/GetToken", nil)
+	if err != nil {
+		Mostrar.Dato = "Error, No se logro construir la peticion con Autenticacion Basica"
+ 		Mostrar.Error = 1
+ 		js, _ := json.Marshal(Mostrar)
+ 		fmt.Println("Error, No se logro construir la peticion con Autenticacion Basica")
+ 		w.Header().Set("Content-Type", "application/json")
+ 		w.Write(js)
+ 		return 
+	}
+	client := &http.Client{}
+	req1.SetBasicAuth("usuario", "contraseña") //ponemos credenciales de autenticacion basica
+	resp, err := client.Do(req1)
+	if err != nil {
+		Mostrar.Dato = "Error, No se logro hacer la peticion con Autenticacion Basica"
+ 		Mostrar.Error = 1
+ 		js, _ := json.Marshal(Mostrar)
+ 		fmt.Println("Error, No se logro hacer la peticion con Autenticacion Basica")
+ 		w.Header().Set("Content-Type", "application/json")
+ 		w.Write(js)
+ 		return 
+	}
+	defer resp.Body.Close()
+	err = json.NewDecoder(resp.Body).Decode(&recepcion1) //obtenemos el token
+	if err != nil || recepcion1.Error == 1 {
+		Mostrar.Dato = "Error, No se logro obtener el token"
+ 		Mostrar.Error = 1
+ 		js, _ := json.Marshal(Mostrar)
+ 		fmt.Println("Error, No se logro obtener el token")
+ 		w.Header().Set("Content-Type", "application/json")
+ 		w.Write(js)
+ 		return 
+	} 
+	/* Construimos JSON a Enviar */
+	Enviaremos.Nombre = "Ricardo Valladares"
+	Documentos = append(Documentos, Documentoss{ TipoDocumento: "DUI", NumeroDocumento: "04566888-7" })
+	Documentos = append(Documentos, Documentoss{ TipoDocumento: "PASAPORTE", NumeroDocumento: "A04566888" })
+	Enviaremos.Documentos = Documentos
+	js, _ := json.Marshal(Enviaremos)
+	req2, err := http.NewRequest("POST", "http://localhost:5002/ServicioConToken", bytes.NewBuffer(js))
+	if err != nil {
+		Mostrar.Dato = "Error, No se logro construir la peticion con Autenticacion Token"
+ 		Mostrar.Error = 1
+ 		js, _ := json.Marshal(Mostrar)
+ 		fmt.Println("Error, No se logro construir la peticion con Autenticacion Token")
+ 		w.Header().Set("Content-Type", "application/json")
+ 		w.Write(js)
+ 		return 
+	}
+	client = &http.Client{}
+	req2.Header.Set("Content-Type", "application/json")
+	req2.Header.Add("Authorization", "Bearer "+recepcion1.Dato) //ponemos credenciales token
+	resp, err = client.Do(req2)
+	if err != nil {
+		Mostrar.Dato = "Error, No se logro enviar el JSON construido"
+		Mostrar.Error = 1
+ 		js, _ := json.Marshal(Mostrar)
+ 		fmt.Println("Error, No se logro enviar el JSON construido")
+ 		w.Header().Set("Content-Type", "application/json")
+ 		w.Write(js)
+ 		return 
+	}
+	defer resp.Body.Close()
+	err = json.NewDecoder(resp.Body).Decode(&recepcion2) //recibimos repuesta de lo que enviamos
+	if err != nil {
+		Mostrar.Dato = "Error, No se logro obtener respuesta del JSON enviado"
+		Mostrar.Error = 1
+ 		js, _ := json.Marshal(Mostrar)
+ 		fmt.Println("Error, No se logro obtener respuesta del JSON enviado")
+ 		w.Header().Set("Content-Type", "application/json")
+ 		w.Write(js)
+ 		return 
+	}
+	js, _ = json.Marshal(recepcion2)
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(js)
+	fmt.Println("----------------------------------")
+	fmt.Println("Token:",recepcion1.Dato)
+	fmt.Println("Dato Enviado:",Enviaremos.Nombre)
+	fmt.Println("Dato Recibido:",recepcion2.Dato)
+	fmt.Println("----------------------------------")
 	return
 }
 
