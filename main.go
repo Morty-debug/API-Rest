@@ -131,9 +131,9 @@ func main() {
 	passhash := hasher("contraseña")
 	mux := http.NewServeMux()
 
-	mux.HandleFunc("/GetToken", authBasicHandler(GetToken, userhash, passhash, "BasicAuth necesita credenciales"))
+	mux.HandleFunc("/ObtenerToken", authBasicHandler(ObtenerToken, userhash, passhash, "BasicAuth necesita credenciales"))
 	mux.HandleFunc("/ServicioConToken", authTokenHandler(ServicioConToken, "TokenAuth necesita token"))
-	mux.HandleFunc("/", Index)
+	mux.HandleFunc("/", Test)
 
 	server := &http.Server{ Addr: ":5002", Handler: mux, ReadTimeout: 60 * time.Second, WriteTimeout: 60 * time.Second }
 	err := server.ListenAndServe()
@@ -142,13 +142,13 @@ func main() {
 	}
 }
 
-func Index(w http.ResponseWriter, r *http.Request) { 
+func Test(w http.ResponseWriter, r *http.Request) { 
 	var Mostrar Respuesta
 	var recepcion1 Respuesta
 	var recepcion2 Respuesta
 	var Enviaremos Recepcion
 	var Documentos []Documentoss
-	req1, err := http.NewRequest("POST", "http://localhost:5002/GetToken", nil)
+	req1, err := http.NewRequest("POST", "http://localhost:5002/ObtenerToken", nil)
 	if err != nil {
 		Mostrar.Dato = "Error, No se logro construir la peticion con Autenticacion Basica"
  		Mostrar.Error = 1
@@ -301,7 +301,7 @@ func ServicioConToken(w http.ResponseWriter, r *http.Request) {
 /* Servicio con Autenticacion Basica, Devuelve un Token
 /*
 /*****************************************************/
-func GetToken(w http.ResponseWriter, r *http.Request) {
+func ObtenerToken(w http.ResponseWriter, r *http.Request) {
 	var respuesta Respuesta
 	db, err := sql.Open("mysql", conexion)
 	defer db.Close()
