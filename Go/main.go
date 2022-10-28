@@ -143,6 +143,12 @@ func main() {
 	}
 }
 
+
+/*****************************************************/
+/*
+/* Metodo para Testear la API
+/*
+/*****************************************************/
 func Test(w http.ResponseWriter, r *http.Request) { 
 	var Mostrar Respuesta
 	var recepcion1 Respuesta
