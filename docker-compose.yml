@@ -1,0 +1,25 @@
+version: '5'
+services:
+  basededatos:
+    build:
+      context: ./MySQL
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: ApiRestDB
+      MYSQL_USER: docker
+      MYSQL_PASSWORD: docker
+    container_name: basededatos
+    ports:
+      - "5001:3306"
+    tty: true
+
+  aplicacion:
+    build:
+      context: ./Go
+      dockerfile: Dockerfile
+    container_name: aplicacion
+    ports:
+      - "5002:5002"
+    tty: true
+    depends_on:
+      - basededatos
