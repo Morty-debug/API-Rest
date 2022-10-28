@@ -14,14 +14,21 @@ import (
 )
 
 
-var conexion = "root:123456@tcp(127.0.0.1:3306)/ApiRest?charset=utf8"
+var conexion = "root:2022Veronica@tcp(127.0.0.1:3306)/ApiRest?charset=utf8"
 
 
-type RespuestaToken struct {
-	Token string
+type Respuesta struct {
+	Dato string
 	Error int
 }
 
+type Recepcion struct {
+	Nombre string
+	Documentos[] struct {
+		TipoDocumento string
+		NumeroDocumento string
+	}
+}
 
 func hasher(s string) []byte {
 	val := sha256.Sum256([]byte(s))
@@ -123,6 +130,7 @@ func main() {
 
 	mux.HandleFunc("/GetToken", authBasicHandler(GetToken, userhash, passhash, "BasicAuth necesita credenciales"))
 	mux.HandleFunc("/ServicioConToken", authTokenHandler(ServicioConToken, "TokenAuth necesita token"))
+	mux.HandleFunc("/", Index)
 
 	server := &http.Server{ Addr: ":5002", Handler: mux, ReadTimeout: 60 * time.Second, WriteTimeout: 60 * time.Second }
 	err := server.ListenAndServe()
@@ -131,14 +139,69 @@ func main() {
 	}
 }
 
+func Index(w http.ResponseWriter, r *http.Request) { 
+	return
+}
+
 
 
 /*****************************************************/
 /*
-/* Servicio con Autenticacion Token
-/*
+ Servicio con Autenticacion Token y Recepcion JSON:
+{
+  "Nombre": "RICARDO",
+  "Documentos": [
+    {
+      "TipoDocumento": "DUI",
+      "NumeroDocumento": "04566888-7"
+    },
+    {
+      "TipoDocumento": "PASAPORTE",
+      "NumeroDocumento": "A04566888"
+    }
+  ] 
+}
 /*****************************************************/
 func ServicioConToken(w http.ResponseWriter, r *http.Request) {
+	var recepcion Recepcion
+	var respuesta Respuesta
+	headerContentTtype := r.Header.Get("Content-Type")
+	if headerContentTtype != "application/json" {
+		respuesta.Dato = "Error, el header no es application/json"
+		respuesta.Error = 1
+		js, _ := json.Marshal(respuesta)
+		fmt.Println("Error, el header no es application/json")
+		w.Header().Set("Content-Type", "application/json")
+		w.Write(js)
+		return
+	}
+	decoder := json.NewDecoder(r.Body)
+	decoder.DisallowUnknownFields()
+	err := decoder.Decode(&recepcion)
+	if err != nil {
+		respuesta.Dato = "Error, estructura JSON no compatible"
+		respuesta.Error = 1
+		js, _ := json.Marshal(respuesta)
+		fmt.Println("Error, estructura JSON no compatible")
+		w.Header().Set("Content-Type", "application/json")
+		w.Write(js)
+		return
+	}
+	for i:=0; i<len(recepcion.Documentos); i++{
+		if recepcion.Documentos[i].TipoDocumento == "DUI" && recepcion.Documentos[i].NumeroDocumento == "04566888-7" {
+			respuesta.Dato = "Documento Valido"
+		}
+	}
+	if respuesta.Dato == "Documento Valido" {
+		respuesta.Error = 0
+	} else {
+		respuesta.Dato = "Documento Invalido"
+		respuesta.Error = 0
+	}
+	fmt.Println(respuesta.Dato)
+	js, _ := json.Marshal(respuesta)
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(js)
 	return
 }
 
@@ -150,7 +213,7 @@ func ServicioConToken(w http.ResponseWriter, r *http.Request) {
 /*
 /*****************************************************/
 func GetToken(w http.ResponseWriter, r *http.Request) {
-	var respuesta RespuestaToken
+	var respuesta Respuesta
 	db, err := sql.Open("mysql", conexion)
 	defer db.Close()
 	if err != nil {
@@ -175,7 +238,7 @@ func GetToken(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	for res.Next() {
-		err := res.Scan(&respuesta.Token)
+		err := res.Scan(&respuesta.Dato)
 		if err != nil {
 			db.Close()
 			res.Close()
@@ -187,7 +250,7 @@ func GetToken(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		respuesta.Error = 0
-		fmt.Println("Token: (",respuesta.Token, ")")
+		fmt.Println("Token: (",respuesta.Dato, ")")
 	}
 	db.Close()
 	res.Close()
