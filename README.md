@@ -20,7 +20,7 @@ curl --location --request POST "http://127.0.01:5002/ServicioConToken" \
 --header "Authorization: Bearer 7ac84b55e6392bc512b65efac99e2be8.09b457cae987753781bb5c6c0c6de730.54ad170900899157f15167cad5985ad1" \
 --header "Content-Type: application/json" \
 --data-raw "{
-  \"Nombre\": \"RICARDO\",
+  \"Nombre\": \"JORGE\",
   \"Documentos\": [
     {
       \"TipoDocumento\": \"DUI\",
