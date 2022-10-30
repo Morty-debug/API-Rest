@@ -249,11 +249,11 @@ func Test(w http.ResponseWriter, r *http.Request) {
   "Documentos": [
     {
       "TipoDocumento": "DUI",
-      "NumeroDocumento": "04566888-7"
+      "NumeroDocumento": "123456789-0"
     },
     {
       "TipoDocumento": "PASAPORTE",
-      "NumeroDocumento": "A04566888"
+      "NumeroDocumento": "A123456789"
     }
   ] 
 }
@@ -284,7 +284,7 @@ func ServicioConToken(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	for i:=0; i<len(recepcion.Documentos); i++{
-		if recepcion.Documentos[i].TipoDocumento == "DUI" && recepcion.Documentos[i].NumeroDocumento == "04566888-7" {
+		if recepcion.Documentos[i].TipoDocumento == "DUI" && recepcion.Documentos[i].NumeroDocumento == "123456789-0" {
 			respuesta.Dato = "Documento Valido"
 		}
 	}
