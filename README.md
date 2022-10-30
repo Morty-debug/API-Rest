@@ -24,11 +24,11 @@ curl --location --request POST "http://127.0.01:5002/ServicioConToken" \
   \"Documentos\": [
     {
       \"TipoDocumento\": \"DUI\",
-      \"NumeroDocumento\": \"04566888-7\"
+      \"NumeroDocumento\": \"123456789-0\"
     },
     {
       \"TipoDocumento\": \"PASAPORTE\",
-      \"NumeroDocumento\": \"A04566888\"
+      \"NumeroDocumento\": \"A123456789\"
     }
   ] 
 }"
